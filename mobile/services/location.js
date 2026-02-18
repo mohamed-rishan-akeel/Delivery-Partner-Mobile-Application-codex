@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import { Platform } from 'react-native';
 import { jobsAPI } from './api';
 
 let locationSubscription = null;
@@ -8,6 +9,12 @@ let currentJobId = null;
  * Request location permissions
  */
 export const requestLocationPermission = async () => {
+    // Skip location permissions on web
+    if (Platform.OS === 'web') {
+        console.log('Skipping location permissions on web');
+        return true;
+    }
+
     try {
         const { status: foregroundStatus } =
             await Location.requestForegroundPermissionsAsync();

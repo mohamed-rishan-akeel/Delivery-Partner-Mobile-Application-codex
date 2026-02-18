@@ -1,4 +1,48 @@
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+
+// Platform-specific storage
+// Use SecureStore on mobile, localStorage on web
+const isWeb = Platform.OS === 'web';
+
+const storage = {
+    async setItem(key, value) {
+        if (isWeb) {
+            try {
+                localStorage.setItem(key, value);
+            } catch (error) {
+                console.error('localStorage setItem error:', error);
+            }
+        } else {
+            await SecureStore.setItemAsync(key, value);
+        }
+    },
+
+    async getItem(key) {
+        if (isWeb) {
+            try {
+                return localStorage.getItem(key);
+            } catch (error) {
+                console.error('localStorage getItem error:', error);
+                return null;
+            }
+        } else {
+            return await SecureStore.getItemAsync(key);
+        }
+    },
+
+    async removeItem(key) {
+        if (isWeb) {
+            try {
+                localStorage.removeItem(key);
+            } catch (error) {
+                console.error('localStorage removeItem error:', error);
+            }
+        } else {
+            await SecureStore.deleteItemAsync(key);
+        }
+    }
+};
 
 const KEYS = {
     ACCESS_TOKEN: 'access_token',
@@ -11,8 +55,8 @@ const KEYS = {
  */
 export const saveTokens = async (accessToken, refreshToken) => {
     try {
-        await SecureStore.setItemAsync(KEYS.ACCESS_TOKEN, accessToken);
-        await SecureStore.setItemAsync(KEYS.REFRESH_TOKEN, refreshToken);
+        await storage.setItem(KEYS.ACCESS_TOKEN, accessToken);
+        await storage.setItem(KEYS.REFRESH_TOKEN, refreshToken);
     } catch (error) {
         console.error('Error saving tokens:', error);
         throw error;
@@ -24,7 +68,7 @@ export const saveTokens = async (accessToken, refreshToken) => {
  */
 export const getAccessToken = async () => {
     try {
-        return await SecureStore.getItemAsync(KEYS.ACCESS_TOKEN);
+        return await storage.getItem(KEYS.ACCESS_TOKEN);
     } catch (error) {
         console.error('Error getting access token:', error);
         return null;
@@ -36,7 +80,7 @@ export const getAccessToken = async () => {
  */
 export const getRefreshToken = async () => {
     try {
-        return await SecureStore.getItemAsync(KEYS.REFRESH_TOKEN);
+        return await storage.getItem(KEYS.REFRESH_TOKEN);
     } catch (error) {
         console.error('Error getting refresh token:', error);
         return null;
@@ -48,9 +92,9 @@ export const getRefreshToken = async () => {
  */
 export const clearTokens = async () => {
     try {
-        await SecureStore.deleteItemAsync(KEYS.ACCESS_TOKEN);
-        await SecureStore.deleteItemAsync(KEYS.REFRESH_TOKEN);
-        await SecureStore.deleteItemAsync(KEYS.USER_DATA);
+        await storage.removeItem(KEYS.ACCESS_TOKEN);
+        await storage.removeItem(KEYS.REFRESH_TOKEN);
+        await storage.removeItem(KEYS.USER_DATA);
     } catch (error) {
         console.error('Error clearing tokens:', error);
     }
@@ -61,7 +105,7 @@ export const clearTokens = async () => {
  */
 export const saveUserData = async (userData) => {
     try {
-        await SecureStore.setItemAsync(KEYS.USER_DATA, JSON.stringify(userData));
+        await storage.setItem(KEYS.USER_DATA, JSON.stringify(userData));
     } catch (error) {
         console.error('Error saving user data:', error);
     }
@@ -72,7 +116,7 @@ export const saveUserData = async (userData) => {
  */
 export const getUserData = async () => {
     try {
-        const data = await SecureStore.getItemAsync(KEYS.USER_DATA);
+        const data = await storage.getItem(KEYS.USER_DATA);
         return data ? JSON.parse(data) : null;
     } catch (error) {
         console.error('Error getting user data:', error);

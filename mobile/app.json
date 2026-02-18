@@ -1,54 +1,55 @@
 {
-    "expo": {
-        "name": "Delivery Partner",
-        "slug": "delivery-partner-mobile",
-        "version": "1.0.0",
-        "orientation": "portrait",
-        "icon": "./assets/icon.png",
-        "userInterfaceStyle": "light",
-        "splash": {
-            "image": "./assets/splash.png",
-            "resizeMode": "contain",
-            "backgroundColor": "#ffffff"
-        },
-        "assetBundlePatterns": [
-            "**/*"
-        ],
-        "ios": {
-            "supportsTablet": true,
-            "bundleIdentifier": "com.deliverypartner.app",
-            "infoPlist": {
-                "NSLocationWhenInUseUsageDescription": "We need your location to track deliveries and provide accurate navigation.",
-                "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location in the background to track deliveries.",
-                "NSCameraUsageDescription": "We need camera access to capture proof of delivery photos.",
-                "NSPhotoLibraryUsageDescription": "We need photo library access to upload delivery photos."
-            }
-        },
-        "android": {
-            "adaptiveIcon": {
-                "foregroundImage": "./assets/adaptive-icon.png",
-                "backgroundColor": "#ffffff"
-            },
-            "package": "com.deliverypartner.app",
-            "permissions": [
-                "ACCESS_FINE_LOCATION",
-                "ACCESS_COARSE_LOCATION",
-                "ACCESS_BACKGROUND_LOCATION",
-                "CAMERA",
-                "READ_EXTERNAL_STORAGE",
-                "WRITE_EXTERNAL_STORAGE"
-            ]
-        },
-        "web": {
-            "favicon": "./assets/favicon.png"
-        },
-        "plugins": [
-            [
-                "expo-location",
-                {
-                    "locationAlwaysAndWhenInUsePermission": "Allow Delivery Partner to use your location to track deliveries."
-                }
-            ]
-        ]
-    }
+  "expo": {
+    "name": "Delivery Partner",
+    "slug": "delivery-partner-mobile",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.deliverypartner.app",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "We need your location to track deliveries and provide accurate navigation.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "We need your location in the background to track deliveries.",
+        "NSCameraUsageDescription": "We need camera access to capture proof of delivery photos.",
+        "NSPhotoLibraryUsageDescription": "We need photo library access to upload delivery photos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.deliverypartner.app",
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow Delivery Partner to use your location to track deliveries."
+        }
+      ],
+      "expo-secure-store"
+    ]
+  }
 }
