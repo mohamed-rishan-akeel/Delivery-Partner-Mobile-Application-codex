@@ -156,6 +156,14 @@ const buildMockProfileResponse = () => ({
     },
 });
 
+const buildMockStatusResponse = (status) => ({
+    data: {
+        success: true,
+        message: 'Status updated successfully',
+        data: { status },
+    },
+});
+
 const MOCK_ACTIVE_JOB = {
     data: {
         data: {
@@ -317,7 +325,30 @@ export const partnerAPI = {
             };
         }
     },
-    updateStatus: (status) => api.put('/partner/status', { status }),
+    updateStatus: async (status) => {
+        try {
+            return await api.put('/partner/status', { status });
+        } catch (error) {
+            const mockSession = await isMockSession();
+            const refreshToken = await getRefreshToken();
+            const statusCode = error?.response?.status;
+            const shouldFallbackToMock =
+                mockSession ||
+                !error?.response ||
+                ((statusCode === 401 || statusCode === 403) && !refreshToken);
+
+            if (!shouldFallbackToMock) {
+                throw error;
+            }
+
+            mockProfileData = {
+                ...mockProfileData,
+                status,
+            };
+
+            return buildMockStatusResponse(status);
+        }
+    },
     updateLocation: (latitude, longitude) =>
         api.put('/partner/location', { latitude, longitude }),
 };

@@ -17,7 +17,6 @@ import {
 } from '../components/Common';
 import {
     fetchAssignedDeliveries,
-    acceptAssignedDelivery,
     rejectAssignedDelivery,
     clearAssignedDeliveriesError,
     selectAssignedDeliveries,
@@ -58,13 +57,6 @@ export default function AssignedDeliveriesScreen({ navigation }) {
             ]);
         }
     }, [error, dispatch]);
-
-    const handleAccept = async (delivery) => {
-        const result = await dispatch(acceptAssignedDelivery(delivery.id));
-        if (acceptAssignedDelivery.fulfilled.match(result)) {
-            navigation.navigate('ActiveDelivery', { job: { ...delivery, status: 'accepted' } });
-        }
-    };
 
     const handleReject = (delivery) => {
         Alert.alert(
@@ -115,12 +107,8 @@ export default function AssignedDeliveriesScreen({ navigation }) {
                     disabled={isUpdating}
                 />
                 <Button
-                    title={item.status === 'accepted' ? 'Open' : 'Accept'}
-                    onPress={
-                        item.status === 'accepted'
-                            ? () => navigation.navigate('ActiveDelivery', { job: item })
-                            : () => handleAccept(item)
-                    }
+                    title="View Details"
+                    onPress={() => navigation.navigate('DeliveryDetails', { delivery: item })}
                     style={styles.primaryAction}
                     disabled={isUpdating}
                 />

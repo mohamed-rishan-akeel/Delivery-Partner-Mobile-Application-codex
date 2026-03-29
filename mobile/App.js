@@ -8,6 +8,7 @@ import { Provider, useDispatch } from 'react-redux';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
+import DeliveryDetailsScreen from './screens/DeliveryDetailsScreen';
 import AvailableJobsScreen from './screens/AvailableJobsScreen';
 import ActiveDeliveryScreen from './screens/ActiveDeliveryScreen';
 import AssignedDeliveriesScreen from './screens/AssignedDeliveriesScreen';
@@ -85,6 +86,11 @@ function AppContent() {
                     initialRouteName={isAuthenticated ? 'Home' : 'Login'}
                 >
                     <Stack.Screen name="Home" component={HomeScreen} options={{ title: 'Dashboard' }} />
+                    <Stack.Screen
+                        name="DeliveryDetails"
+                        component={DeliveryDetailsScreen}
+                        options={{ title: 'Delivery Details' }}
+                    />
                     <Stack.Screen
                         name="AvailableJobs"
                         component={AvailableJobsScreen}
