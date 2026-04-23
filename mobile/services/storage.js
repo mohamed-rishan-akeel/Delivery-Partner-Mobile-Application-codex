@@ -48,7 +48,7 @@ const KEYS = {
     ACCESS_TOKEN: 'access_token',
     REFRESH_TOKEN: 'refresh_token',
     USER_DATA: 'user_data',
-    PUSH_TOKEN: 'push_token',
+
 };
 
 /**
@@ -105,45 +105,13 @@ export const clearTokens = async () => {
         await storage.removeItem(KEYS.ACCESS_TOKEN);
         await storage.removeItem(KEYS.REFRESH_TOKEN);
         await storage.removeItem(KEYS.USER_DATA);
-        await storage.removeItem(KEYS.PUSH_TOKEN);
+
     } catch (error) {
         console.error('Error clearing tokens:', error);
     }
 };
 
-/**
- * Save push token
- */
-export const savePushToken = async (pushToken) => {
-    try {
-        await storage.setItem(KEYS.PUSH_TOKEN, pushToken);
-    } catch (error) {
-        console.error('Error saving push token:', error);
-    }
-};
 
-/**
- * Get push token
- */
-export const getPushToken = async () => {
-    try {
-        return await storage.getItem(KEYS.PUSH_TOKEN);
-    } catch (error) {
-        console.error('Error getting push token:', error);
-        return null;
-    }
-};
-
-/**
- * Clear push token
- */
-export const clearPushToken = async () => {
-    try {
-        await storage.removeItem(KEYS.PUSH_TOKEN);
-    } catch (error) {
-        console.error('Error clearing push token:', error);
-    }
-};
 
 /**
  * Save user data
