@@ -1,6 +1,6 @@
 // API Configuration
-// Change this to your backend server URL
-export const API_BASE_URL = 'http://192.168.8.133:3000/api';
+// Change this to your main backend server URL (use your computer's local IP for testing)
+export const API_BASE_URL = 'http://YOUR_LOCAL_IP:3000/api';
 
 // For testing on physical device, use your computer's IP address:
 // export const API_BASE_URL = 'http://192.168.1.XXX:3000/api';
