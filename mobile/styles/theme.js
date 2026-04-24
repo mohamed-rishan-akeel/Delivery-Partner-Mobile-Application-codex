@@ -1,29 +1,30 @@
 export const colors = {
-    primary: '#143C8C',
-    primaryDark: '#0D2A63',
-    primarySoft: '#DCE8FF',
-    secondary: '#0F9D7A',
-    secondarySoft: '#D9F6EE',
-    accent: '#F0B44C',
-    accentSoft: '#FFF2D9',
-    danger: '#D94B63',
-    dangerSoft: '#FFE2E8',
-    warning: '#C98A1B',
-    warningSoft: '#FFF1D5',
-    info: '#4B7BE5',
-    infoSoft: '#E5EEFF',
-    background: '#F3F6FB',
-    backgroundAccent: '#E8EEF8',
+    primary: '#0F172A',      // Sleek nearly black for premium feel
+    primaryDark: '#020617',  
+    primarySoft: '#F1F5F9',  
+    secondary: '#3B82F6',    // Vibrant blue for accents/CTA
+    secondarySoft: '#DBEAFE',
+    accent: '#8B5CF6',       // Purple accent
+    accentSoft: '#EDE9FE',
+    danger: '#EF4444',
+    dangerSoft: '#FEE2E2',
+    warning: '#F59E0B',
+    warningSoft: '#FEF3C7',
+    info: '#0EA5E9',
+    infoSoft: '#E0F2FE',
+    background: '#F8FAFC',   // Crisp light gray/blue background
+    backgroundAccent: '#F1F5F9',
     surface: '#FFFFFF',
-    surfaceMuted: '#F8FAFD',
-    text: '#142033',
-    textSecondary: '#63708A',
-    textMuted: '#8E99AE',
-    border: '#D7DFEC',
-    borderStrong: '#C2CDDE',
-    success: '#0F9D7A',
-    disabled: '#B5C0D3',
-    overlay: 'rgba(9, 18, 34, 0.52)',
+    surfaceMuted: '#F8FAFC',
+    text: '#0F172A',         // Slate 900
+    textSecondary: '#64748B',// Slate 500
+    textMuted: '#94A3B8',    // Slate 400
+    border: '#E2E8F0',
+    borderStrong: '#CBD5E1',
+    success: '#10B981',
+    successSoft: '#D1FAE5',
+    disabled: '#CBD5E1',
+    overlay: 'rgba(15, 23, 42, 0.4)',
 };
 
 export const spacing = {
@@ -36,10 +37,10 @@ export const spacing = {
 };
 
 export const radii = {
-    sm: 10,
+    sm: 12,
     md: 16,
-    lg: 22,
-    xl: 28,
+    lg: 24,
+    xl: 32,
     pill: 999,
 };
 
@@ -57,8 +58,8 @@ export const typography = {
         letterSpacing: -0.6,
     },
     h2: {
-        fontSize: 24,
-        fontWeight: '800',
+        fontSize: 22,
+        fontWeight: '700',
         color: colors.text,
         letterSpacing: -0.4,
     },
@@ -66,6 +67,7 @@ export const typography = {
         fontSize: 18,
         fontWeight: '700',
         color: colors.text,
+        letterSpacing: -0.2,
     },
     body: {
         fontSize: 15,
@@ -73,37 +75,38 @@ export const typography = {
         color: colors.text,
     },
     bodySmall: {
-        fontSize: 13,
-        lineHeight: 19,
+        fontSize: 14,
+        lineHeight: 20,
         color: colors.textSecondary,
     },
     caption: {
-        fontSize: 11,
+        fontSize: 12,
         lineHeight: 16,
-        color: colors.textSecondary,
-        letterSpacing: 0.7,
+        color: colors.textMuted,
+        fontWeight: '600',
+        letterSpacing: 0.5,
     },
 };
 
 export const shadows = {
     small: {
-        shadowColor: '#0D1B34',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.06,
-        shadowRadius: 10,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
         elevation: 2,
     },
     medium: {
-        shadowColor: '#0D1B34',
-        shadowOffset: { width: 0, height: 10 },
-        shadowOpacity: 0.1,
-        shadowRadius: 18,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 8 },
+        shadowOpacity: 0.08,
+        shadowRadius: 16,
         elevation: 5,
     },
     large: {
-        shadowColor: '#0D1B34',
-        shadowOffset: { width: 0, height: 18 },
-        shadowOpacity: 0.14,
+        shadowColor: '#0F172A',
+        shadowOffset: { width: 0, height: 16 },
+        shadowOpacity: 0.1,
         shadowRadius: 24,
         elevation: 8,
     },

@@ -354,6 +354,7 @@ const styles = StyleSheet.create({
     heroCard: {
         backgroundColor: colors.primary,
         marginBottom: spacing.lg,
+        overflow: 'hidden',
     },
     profileHeader: {
         flexDirection: 'row',
@@ -424,7 +425,7 @@ const styles = StyleSheet.create({
     },
     statValue: {
         ...typography.h2,
-        color: colors.primary,
+        color: colors.secondary,
     },
     statLabel: {
         ...typography.bodySmall,

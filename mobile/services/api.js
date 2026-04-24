@@ -148,8 +148,7 @@ let mockProfileData = {
     address: 'Colombo 05, Sri Lanka',
     emergency_contact_name: 'Nadeesha Perera',
     emergency_contact_phone: '+94 77 123 4567',
-    push_token: '',
-    push_platform: '',
+
 };
 
 const buildMockProfileResponse = () => ({
@@ -351,31 +350,7 @@ export const partnerAPI = {
             return buildMockStatusResponse(status);
         }
     },
-    updatePushToken: async (pushToken, devicePlatform) => {
-        try {
-            return await api.put('/partner/push-token', {
-                pushToken,
-                devicePlatform,
-            });
-        } catch (error) {
-            mockProfileData = {
-                ...mockProfileData,
-                push_token: pushToken,
-                push_platform: devicePlatform,
-            };
 
-            return {
-                data: {
-                    success: true,
-                    message: 'Push token saved successfully',
-                    data: {
-                        push_token: pushToken,
-                        push_platform: devicePlatform,
-                    },
-                },
-            };
-        }
-    },
     updateLocation: (latitude, longitude) =>
         api.put('/partner/location', { latitude, longitude }),
 };

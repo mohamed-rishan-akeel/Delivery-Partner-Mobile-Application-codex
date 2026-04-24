@@ -40,7 +40,7 @@ export const Button = ({
     ];
 
     const spinnerColor =
-        variant === 'outline' || variant === 'ghost' ? colors.primary : colors.surface;
+        variant === 'outline' || variant === 'ghost' ? colors.secondary : colors.surface;
 
     return (
         <TouchableOpacity
@@ -179,10 +179,10 @@ const styles = StyleSheet.create({
         color: colors.surface,
     },
     buttonTextOutline: {
-        color: colors.primary,
+        color: colors.secondary,
     },
     buttonTextGhost: {
-        color: colors.primary,
+        color: colors.secondary,
     },
     fieldGroup: {
         marginBottom: spacing.md,
@@ -258,7 +258,7 @@ const styles = StyleSheet.create({
         backgroundColor: colors.infoSoft,
     },
     badgeSuccess: {
-        backgroundColor: colors.secondarySoft,
+        backgroundColor: colors.successSoft || '#D1FAE5',
     },
     badgeWarning: {
         backgroundColor: colors.warningSoft,
@@ -274,7 +274,7 @@ const styles = StyleSheet.create({
         color: colors.info,
     },
     badgeTextSuccess: {
-        color: colors.secondary,
+        color: colors.success,
     },
     badgeTextWarning: {
         color: colors.warning,
