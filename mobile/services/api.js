@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { API_BASE_URL } from '../config';
-import { getAccessToken, getRefreshToken, saveTokens, clearTokens, isMockSession } from './storage';
+import { getAccessToken, saveToken, clearTokens, isMockSession } from './storage';
 
 // Create axios instance
 const api = axios.create({
@@ -11,41 +11,15 @@ const api = axios.create({
     },
 });
 
-// Flag to prevent multiple refresh attempts
-let isRefreshing = false;
-let refreshSubscribers = [];
 let hasWarnedMockProfile = false;
 
 /**
- * Subscribe to token refresh
- */
-const subscribeTokenRefresh = (callback) => {
-    refreshSubscribers.push(callback);
-};
-
-/**
- * Notify all subscribers when token is refreshed
- */
-const onTokenRefreshed = (newAccessToken) => {
-    refreshSubscribers.forEach((callback) => callback(null, newAccessToken));
-    refreshSubscribers = [];
-};
-
-/**
- * Notify all subscribers when token refresh fails
- */
-const onRefreshFailed = (error) => {
-    refreshSubscribers.forEach((callback) => callback(error));
-    refreshSubscribers = [];
-};
-
-/**
- * Request interceptor - Add access token to headers
+ * Request interceptor - Add token to headers
  */
 api.interceptors.request.use(
     async (config) => {
         const token = await getAccessToken();
-        if (token) {
+        if (token && token !== 'mock-guest-token') {
             config.headers.Authorization = `Bearer ${token}`;
         }
         return config;
@@ -56,78 +30,18 @@ api.interceptors.request.use(
 );
 
 /**
- * Response interceptor - Handle token refresh on 401/403
+ * Response interceptor - Handle 401/403 errors
  */
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
-        const originalRequest = error.config;
-
-        // If error is 401/403 and we haven't tried to refresh yet
-        if (
-            (error.response?.status === 401 || error.response?.status === 403) &&
-            !originalRequest._retry
-        ) {
-            if (isRefreshing) {
-                // Wait for the ongoing refresh to complete
-                return new Promise((resolve, reject) => {
-                    subscribeTokenRefresh((err, newAccessToken) => {
-                        if (err) {
-                            return reject(err);
-                        }
-                        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-                        resolve(api(originalRequest));
-                    });
-                });
-            }
-
-            // Don't attempt to refresh if using the mock token
+        // If error is 401/403, we just clear tokens as we don't have refresh logic anymore
+        if (error.response?.status === 401 || error.response?.status === 403) {
             const token = await getAccessToken();
-            if (token === 'mock-guest-token') {
-                return Promise.reject(error);
-            }
-
-            originalRequest._retry = true;
-            isRefreshing = true;
-
-            try {
-                const refreshToken = await getRefreshToken();
-
-                if (!refreshToken) {
-                    // No refresh token, user needs to login again
-                    await clearTokens();
-                    throw new Error('No refresh token available');
-                }
-
-                // Call refresh endpoint
-                const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-                    refreshToken,
-                });
-
-                const { accessToken } = response.data.data;
-
-                // Save new access token
-                await saveTokens(accessToken, refreshToken);
-
-                // Update authorization header
-                api.defaults.headers.common.Authorization = `Bearer ${accessToken}`;
-                originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-
-                // Notify all waiting requests
-                onTokenRefreshed(accessToken);
-
-                isRefreshing = false;
-
-                // Retry original request
-                return api(originalRequest);
-            } catch (refreshError) {
-                isRefreshing = false;
-                onRefreshFailed(refreshError);
+            if (token !== 'mock-guest-token') {
                 await clearTokens();
-                return Promise.reject(refreshError);
             }
         }
-
         return Promise.reject(error);
     }
 );
@@ -247,7 +161,7 @@ const MOCK_JOBS = {
 export const authAPI = {
     register: (data) => api.post('/auth/register', data),
     login: (data) => api.post('/auth/login', data),
-    logout: (refreshToken) => api.post('/auth/logout', { refreshToken }),
+    logout: () => Promise.resolve({ data: { success: true } }), // Local only for JWT
 };
 
 export const partnerAPI = {
@@ -331,12 +245,11 @@ export const partnerAPI = {
             return await api.put('/partner/status', { status });
         } catch (error) {
             const mockSession = await isMockSession();
-            const refreshToken = await getRefreshToken();
             const statusCode = error?.response?.status;
             const shouldFallbackToMock =
                 mockSession ||
                 !error?.response ||
-                ((statusCode === 401 || statusCode === 403) && !refreshToken);
+                (statusCode === 401 || statusCode === 403);
 
             if (!shouldFallbackToMock) {
                 throw error;

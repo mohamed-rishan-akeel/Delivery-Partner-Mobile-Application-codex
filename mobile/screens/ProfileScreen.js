@@ -11,7 +11,7 @@ import {
 import * as ImagePicker from 'expo-image-picker';
 import { Button, Input, SurfaceCard, SectionHeader, StatusBadge } from '../components/Common';
 import { partnerAPI, authAPI } from '../services/api';
-import { clearTokens, getRefreshToken } from '../services/storage';
+import { clearTokens } from '../services/storage';
 import { colors, spacing, typography, radii } from '../styles/theme';
 
 const createProfileForm = (profile) => ({
@@ -146,14 +146,8 @@ export default function ProfileScreen() {
                 text: 'Logout',
                 style: 'destructive',
                 onPress: async () => {
-                    try {
-                        const refreshToken = await getRefreshToken();
-                        await authAPI.logout(refreshToken);
-                    } catch (error) {
-                        console.error('Logout error:', error);
-                    } finally {
-                        await clearTokens();
-                    }
+                    await authAPI.logout();
+                    await clearTokens();
                 },
             },
         ]);

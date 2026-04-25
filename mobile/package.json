@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
-    "start": "expo start",
-    "android": "expo start --android",
-    "ios": "expo start --ios",
+    "update-ip": "node scripts/update-ip.js",
+    "start": "npm run update-ip && expo start",
+    "android": "npm run update-ip && expo start --android",
+    "ios": "npm run update-ip && expo start --ios",
     "web": "expo start --web"
   },
   "dependencies": {

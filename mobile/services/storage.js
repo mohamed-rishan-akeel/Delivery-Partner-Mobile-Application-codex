@@ -45,35 +45,33 @@ const storage = {
 };
 
 const KEYS = {
-    ACCESS_TOKEN: 'access_token',
-    REFRESH_TOKEN: 'refresh_token',
-    USER_DATA: 'user_data',
+    AUTH_TOKEN: 'digifix_auth_token',
+    USER_DATA: 'digifix_user_data',
 
 };
 
 /**
- * Save authentication tokens securely
+ * Save authentication token securely
  */
-export const saveTokens = async (accessToken, refreshToken) => {
+export const saveToken = async (token) => {
     try {
-        await storage.setItem(KEYS.ACCESS_TOKEN, accessToken);
-        await storage.setItem(KEYS.REFRESH_TOKEN, refreshToken);
+        await storage.setItem(KEYS.AUTH_TOKEN, token);
     } catch (error) {
-        console.error('Error saving tokens:', error);
+        console.error('Error saving token:', error);
         throw error;
     }
 };
 
 /**
- * Get access token
+ * Get authentication token
  */
 export const getAccessToken = async () => {
     try {
-        const token = await storage.getItem(KEYS.ACCESS_TOKEN);
-        return token || 'mock-guest-token';
+        const token = await storage.getItem(KEYS.AUTH_TOKEN);
+        return token;
     } catch (error) {
         console.error('Error getting access token:', error);
-        return 'mock-guest-token';
+        return null;
     }
 };
 
@@ -86,15 +84,10 @@ export const isMockSession = async () => {
 };
 
 /**
- * Get refresh token
+ * Get refresh token (deprecated in single-token flow)
  */
 export const getRefreshToken = async () => {
-    try {
-        return await storage.getItem(KEYS.REFRESH_TOKEN);
-    } catch (error) {
-        console.error('Error getting refresh token:', error);
-        return null;
-    }
+    return null;
 };
 
 /**
@@ -102,8 +95,7 @@ export const getRefreshToken = async () => {
  */
 export const clearTokens = async () => {
     try {
-        await storage.removeItem(KEYS.ACCESS_TOKEN);
-        await storage.removeItem(KEYS.REFRESH_TOKEN);
+        await storage.removeItem(KEYS.AUTH_TOKEN);
         await storage.removeItem(KEYS.USER_DATA);
 
     } catch (error) {

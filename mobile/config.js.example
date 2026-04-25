@@ -1,9 +1,6 @@
 // API Configuration
-// Change this to your main backend server URL (use your computer's local IP for testing)
+// This file is a template. The actual config.js is automatically updated with your IP on 'npm start'.
 export const API_BASE_URL = 'http://YOUR_LOCAL_IP:3000/api';
-
-// For testing on physical device, use your computer's IP address:
-// export const API_BASE_URL = 'http://192.168.1.XXX:3000/api';
 
 // Admin API key for testing (matches backend .env)
 export const ADMIN_API_KEY = 'test_admin_key_change_in_production';

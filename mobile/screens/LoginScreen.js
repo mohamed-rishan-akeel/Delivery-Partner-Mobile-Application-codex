@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { Button, Input, SurfaceCard, StatusBadge } from '../components/Common';
 import { authAPI } from '../services/api';
-import { saveTokens, saveUserData } from '../services/storage';
+import { saveToken, saveUserData } from '../services/storage';
 import { colors, spacing, typography, radii } from '../styles/theme';
 
 export default function LoginScreen({ navigation }) {
@@ -27,10 +27,13 @@ export default function LoginScreen({ navigation }) {
         setLoading(true);
         try {
             const response = await authAPI.login({ email, password });
-            const { partner, accessToken, refreshToken } = response.data.data;
+            const { user, token } = response.data.data;
 
-            await saveTokens(accessToken, refreshToken);
-            await saveUserData(partner);
+            await saveToken(token);
+            await saveUserData(user);
+            
+            // Navigate to main app
+            navigation.replace('MainTabs');
         } catch (error) {
             Alert.alert(
                 'Login Failed',
