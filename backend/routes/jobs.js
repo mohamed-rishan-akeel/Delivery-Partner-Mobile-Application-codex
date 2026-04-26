@@ -2,6 +2,10 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { query, getClient } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const {
+    dispatchAvailableJobs,
+    resolveOffer,
+} = require('../services/realtimeDispatch');
 
 const router = express.Router();
 
@@ -22,6 +26,13 @@ router.get('/available', async (req, res, next) => {
       status, created_at
       FROM delivery_jobs
       WHERE status = 'available'
+        AND NOT EXISTS (
+            SELECT 1
+            FROM delivery_request_offers dro
+            WHERE dro.job_id = delivery_jobs.id
+              AND dro.offer_status = 'pending'
+              AND dro.expires_at > NOW()
+        )
       ORDER BY created_at DESC`,
             []
         );
@@ -126,6 +137,112 @@ router.get('/history', async (req, res, next) => {
 });
 
 /**
+ * POST /api/jobs/request-offers/:offerId/accept
+ * Accept an incoming realtime order request
+ */
+router.post('/request-offers/:offerId/accept', async (req, res, next) => {
+    try {
+        const offerId = parseInt(req.params.offerId);
+        const result = await resolveOffer({
+            offerId,
+            partnerId: req.user.id,
+            action: 'accepted',
+            reason: 'driver_accepted_request',
+        });
+
+        if (!result.success) {
+            return res.status(result.statusCode || 400).json({
+                success: false,
+                message: result.message,
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Incoming request accepted successfully',
+            data: result.data,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
+ * POST /api/jobs/request-offers/:offerId/decline
+ * Decline an incoming realtime order request
+ */
+router.post(
+    '/request-offers/:offerId/decline',
+    [body('reason').optional().trim()],
+    async (req, res, next) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Invalid decline payload',
+                    errors: errors.array(),
+                });
+            }
+
+            const offerId = parseInt(req.params.offerId);
+            const result = await resolveOffer({
+                offerId,
+                partnerId: req.user.id,
+                action: 'declined',
+                reason: req.body.reason || 'driver_declined_request',
+            });
+
+            if (!result.success) {
+                return res.status(result.statusCode || 400).json({
+                    success: false,
+                    message: result.message,
+                });
+            }
+
+            res.json({
+                success: true,
+                message: 'Incoming request declined successfully',
+                data: result.data,
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
+);
+
+/**
+ * POST /api/jobs/request-offers/:offerId/expire
+ * Explicitly expire an incoming realtime order request from the client timer
+ */
+router.post('/request-offers/:offerId/expire', async (req, res, next) => {
+    try {
+        const offerId = parseInt(req.params.offerId);
+        const result = await resolveOffer({
+            offerId,
+            partnerId: req.user.id,
+            action: 'expired',
+            reason: 'driver_timer_elapsed',
+        });
+
+        if (!result.success) {
+            return res.status(result.statusCode || 400).json({
+                success: false,
+                message: result.message,
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Incoming request expired successfully',
+            data: result.data,
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+/**
  * POST /api/jobs/:id/accept
  * Accept an available job
  */
@@ -136,6 +253,24 @@ router.post('/:id/accept', async (req, res, next) => {
         await client.query('BEGIN');
 
         const jobId = parseInt(req.params.id);
+
+        const pendingOfferCheck = await client.query(
+            `SELECT id
+             FROM delivery_request_offers
+             WHERE job_id = $1
+               AND offer_status = 'pending'
+               AND expires_at > NOW()
+             LIMIT 1`,
+            [jobId]
+        );
+
+        if (pendingOfferCheck.rows.length > 0) {
+            await client.query('ROLLBACK');
+            return res.status(409).json({
+                success: false,
+                message: 'This job is already being offered to another driver',
+            });
+        }
 
         const partnerStatusCheck = await client.query(
             'SELECT status FROM delivery_partners WHERE id = $1',
@@ -278,6 +413,8 @@ router.post('/:id/reject', async (req, res, next) => {
 
         await client.query('COMMIT');
 
+        await dispatchAvailableJobs();
+
         res.json({
             success: true,
             message: 'Assigned delivery rejected successfully',
@@ -404,6 +541,10 @@ router.put(
             }
 
             await client.query('COMMIT');
+
+            if (status === 'failed') {
+                await dispatchAvailableJobs();
+            }
 
             res.json({
                 success: true,
@@ -604,6 +745,8 @@ router.post(
             }
 
             await client.query('COMMIT');
+
+            await dispatchAvailableJobs();
 
             res.json({
                 success: true,

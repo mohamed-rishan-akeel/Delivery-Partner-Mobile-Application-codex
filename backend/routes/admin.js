@@ -2,6 +2,7 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { query } = require('../config/database');
 const { authenticateAdmin } = require('../middleware/auth');
+const { dispatchJobToNextEligibleDriver } = require('../services/realtimeDispatch');
 
 const router = express.Router();
 
@@ -85,9 +86,11 @@ router.post(
                 ]
             );
 
+            await dispatchJobToNextEligibleDriver(result.rows[0].id);
+
             res.status(201).json({
                 success: true,
-                message: 'Job created successfully',
+                message: 'Job created and dispatch started successfully',
                 data: result.rows[0],
             });
         } catch (error) {

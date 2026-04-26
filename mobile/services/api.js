@@ -431,6 +431,49 @@ export const jobsAPI = {
             };
         }
     },
+    acceptIncomingRequest: (offerId) =>
+        api.post(`/jobs/request-offers/${offerId}/accept`).catch(async (error) => {
+            if (!(await isMockSession())) {
+                throw error;
+            }
+
+            if (MOCK_ACTIVE_JOB.data.data) {
+                return {
+                    data: {
+                        success: true,
+                        data: MOCK_ACTIVE_JOB.data.data,
+                    },
+                };
+            }
+
+            throw error;
+        }),
+    declineIncomingRequest: (offerId, reason = 'driver_declined_request') =>
+        api.post(`/jobs/request-offers/${offerId}/decline`, { reason }).catch(async (error) => {
+            if (!(await isMockSession())) {
+                throw error;
+            }
+
+            return {
+                data: {
+                    success: true,
+                    data: { requestId: offerId, resolution: 'declined' },
+                },
+            };
+        }),
+    expireIncomingRequest: (offerId) =>
+        api.post(`/jobs/request-offers/${offerId}/expire`).catch(async (error) => {
+            if (!(await isMockSession())) {
+                throw error;
+            }
+
+            return {
+                data: {
+                    success: true,
+                    data: { requestId: offerId, resolution: 'expired' },
+                },
+            };
+        }),
     rejectAssigned: async (jobId) => {
         try {
             return await api.post(`/jobs/${jobId}/reject`);
