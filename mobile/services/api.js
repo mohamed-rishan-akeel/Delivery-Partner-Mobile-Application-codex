@@ -237,10 +237,29 @@ const MOCK_ASSIGNED_JOBS = {
     },
 };
 
-const MOCK_JOBS = {
+const MOCK_HISTORY_JOBS = {
     data: {
-        data: []
-    }
+        data: [
+            {
+                id: 88,
+                order_number: 'DLV-23994',
+                customer_name: 'Nipun Wijesinghe',
+                pickup_address: 'One Galle Face Mall, Colombo 02, Sri Lanka',
+                dropoff_address: 'Bauddhaloka Mawatha, Colombo 07, Sri Lanka',
+                distance_km: 6.2,
+                payment_amount: 17.25,
+                status: 'delivered',
+                assigned_at: new Date(Date.now() - 1000 * 60 * 80).toISOString(),
+                picked_up_at: new Date(Date.now() - 1000 * 60 * 48).toISOString(),
+                delivered_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+                photo_url: '',
+                signature_data: '',
+                recipient_name: 'A. Perera',
+                notes: 'Delivered to front desk reception.',
+                proof_submitted_at: new Date(Date.now() - 1000 * 60 * 18).toISOString(),
+            },
+        ],
+    },
 };
 
 // API methods
@@ -381,7 +400,11 @@ export const jobsAPI = {
         try {
             return await api.get(`/jobs/history?limit=${limit}&offset=${offset}`);
         } catch (error) {
-            return MOCK_JOBS;
+            return {
+                data: {
+                    data: MOCK_HISTORY_JOBS.data.data.slice(offset, offset + limit),
+                },
+            };
         }
     },
     acceptJob: (jobId) => api.post(`/jobs/${jobId}/accept`),
@@ -408,6 +431,49 @@ export const jobsAPI = {
             };
         }
     },
+    acceptIncomingRequest: (offerId) =>
+        api.post(`/jobs/request-offers/${offerId}/accept`).catch(async (error) => {
+            if (!(await isMockSession())) {
+                throw error;
+            }
+
+            if (MOCK_ACTIVE_JOB.data.data) {
+                return {
+                    data: {
+                        success: true,
+                        data: MOCK_ACTIVE_JOB.data.data,
+                    },
+                };
+            }
+
+            throw error;
+        }),
+    declineIncomingRequest: (offerId, reason = 'driver_declined_request') =>
+        api.post(`/jobs/request-offers/${offerId}/decline`, { reason }).catch(async (error) => {
+            if (!(await isMockSession())) {
+                throw error;
+            }
+
+            return {
+                data: {
+                    success: true,
+                    data: { requestId: offerId, resolution: 'declined' },
+                },
+            };
+        }),
+    expireIncomingRequest: (offerId) =>
+        api.post(`/jobs/request-offers/${offerId}/expire`).catch(async (error) => {
+            if (!(await isMockSession())) {
+                throw error;
+            }
+
+            return {
+                data: {
+                    success: true,
+                    data: { requestId: offerId, resolution: 'expired' },
+                },
+            };
+        }),
     rejectAssigned: async (jobId) => {
         try {
             return await api.post(`/jobs/${jobId}/reject`);
@@ -468,11 +534,50 @@ export const jobsAPI = {
                 throw error;
             }
 
+            const activeJob = MOCK_ACTIVE_JOB.data.data;
+
+            if (activeJob?.id === jobId) {
+                const deliveredAt = new Date().toISOString();
+
+                MOCK_HISTORY_JOBS.data.data = [
+                    {
+                        id: activeJob.id,
+                        order_number: activeJob.order_number,
+                        customer_name: activeJob.customer_name,
+                        pickup_address: activeJob.pickup_address,
+                        dropoff_address: activeJob.dropoff_address,
+                        distance_km: activeJob.distance_km,
+                        payment_amount: activeJob.payment_amount,
+                        status: 'delivered',
+                        assigned_at: activeJob.assigned_at ?? deliveredAt,
+                        picked_up_at: activeJob.picked_up_at ?? null,
+                        delivered_at: deliveredAt,
+                        photo_url: proofData.photoUrl ?? '',
+                        signature_data: proofData.signatureData ?? '',
+                        recipient_name: proofData.recipientName ?? '',
+                        notes: proofData.notes ?? '',
+                        proof_submitted_at: deliveredAt,
+                    },
+                    ...MOCK_HISTORY_JOBS.data.data.filter((job) => job.id !== jobId),
+                ];
+
+                MOCK_ACTIVE_JOB.data.data = null;
+                mockProfileData = {
+                    ...mockProfileData,
+                    status: 'online',
+                    total_deliveries: mockProfileData.total_deliveries + 1,
+                };
+            }
+
             return {
                 data: {
                     success: true,
-                    message: 'Mock proof submitted successfully',
-                    data: { jobId },
+                    message: 'Mock delivery completed and archived successfully',
+                    data: {
+                        id: jobId,
+                        status: 'delivered',
+                        deliveredAt: new Date().toISOString(),
+                    },
                 },
             };
         }),

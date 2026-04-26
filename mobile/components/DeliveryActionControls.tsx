@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from 'react';
-import { Modal, StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { useDispatch } from 'react-redux';
-import { Button, Input, SurfaceCard } from './Common';
+import { Button, SurfaceCard } from './Common';
 import { jobsAPI } from '../services/api';
 import { getCurrentLocation } from '../services/location';
 import {
@@ -19,7 +19,7 @@ import {
     getNextStatusForAction,
     isWorkflowStatus,
 } from '../utils/deliveryWorkflow';
-import { colors, radii, spacing, typography } from '../styles/theme';
+import { colors, spacing, typography } from '../styles/theme';
 
 type DeliveryActionSuccess = {
     action: DeliveryWorkflowAction;
@@ -34,7 +34,6 @@ type DeliveryActionControlsProps = {
 
 type ActionRequestState = {
     action: DeliveryWorkflowAction;
-    note: string;
 };
 
 const ACTION_ORDER: readonly DeliveryWorkflowAction[] = [
@@ -59,49 +58,6 @@ const ACTION_VARIANTS: Record<
     [DeliveryWorkflowAction.CANCEL]: 'danger',
 };
 
-const CRITICAL_ACTION_DETAILS: Partial<
-    Record<
-        DeliveryWorkflowAction,
-        {
-            title: string;
-            message: string;
-            confirmLabel: string;
-            noteLabel?: string;
-            notePlaceholder?: string;
-        }
-    >
-> = {
-    [DeliveryWorkflowAction.REJECT]: {
-        title: 'Reject Delivery',
-        message: 'This will return the delivery to dispatch and remove it from your queue.',
-        confirmLabel: 'Reject Delivery',
-    },
-    [DeliveryWorkflowAction.ARRIVE_PICKUP]: {
-        title: 'Arrived at Pickup',
-        message: 'Confirm that you are at the pickup location. You can add an optional note for dispatch.',
-        confirmLabel: 'Confirm Arrival',
-        noteLabel: 'Pickup Note',
-        notePlaceholder: 'Optional: front desk checked in, store queue, gate code...',
-    },
-    [DeliveryWorkflowAction.PICK_UP]: {
-        title: 'Mark Picked Up',
-        message: 'Confirm that the order has been collected. You can include an optional pickup note.',
-        confirmLabel: 'Confirm Pickup',
-        noteLabel: 'Pickup Note',
-        notePlaceholder: 'Optional: bag count, packaging issue, merchant note...',
-    },
-    [DeliveryWorkflowAction.START_TRANSIT]: {
-        title: 'Start Transit',
-        message: 'Confirm that you have the order and are starting the customer route.',
-        confirmLabel: 'Start Transit',
-    },
-    [DeliveryWorkflowAction.COMPLETE_DELIVERY]: {
-        title: 'Mark Delivered',
-        message: 'Confirm that the order has been handed off to the customer.',
-        confirmLabel: 'Mark Delivered',
-    },
-};
-
 const getActionTitle = (action: DeliveryWorkflowAction) =>
     DELIVERY_ACTION_LABELS[action] ?? 'Continue';
 
@@ -113,9 +69,6 @@ export default function DeliveryActionControls({
     const dispatch = useDispatch<AppDispatch>();
     const [loadingAction, setLoadingAction] =
         useState<DeliveryWorkflowAction | null>(null);
-    const [pendingConfirmation, setPendingConfirmation] =
-        useState<DeliveryWorkflowAction | null>(null);
-    const [pickupNote, setPickupNote] = useState('');
     const [actionError, setActionError] = useState<string | null>(null);
     const [lastFailedRequest, setLastFailedRequest] =
         useState<ActionRequestState | null>(null);
@@ -132,7 +85,7 @@ export default function DeliveryActionControls({
         return ACTION_ORDER.filter((action) => allowed.includes(action));
     }, [delivery.status]);
 
-    const runAction = async (action: DeliveryWorkflowAction, note = pickupNote) => {
+    const runAction = async (action: DeliveryWorkflowAction) => {
         if (!isWorkflowStatus(delivery.status)) {
             return;
         }
@@ -176,6 +129,18 @@ export default function DeliveryActionControls({
                         getNextStatusForAction(delivery.status, action) ?? delivery.status,
                 };
             } else {
+                if (action === DeliveryWorkflowAction.COMPLETE_DELIVERY) {
+                    nextDelivery = {
+                        ...delivery,
+                    };
+
+                    onDeliveryChange?.(nextDelivery);
+                    onActionSuccess?.({ action, delivery: nextDelivery });
+                    setLastFailedRequest(null);
+                    didSucceed = true;
+                    return;
+                }
+
                 const nextStatus = getNextStatusForAction(delivery.status, action);
 
                 if (!nextStatus) {
@@ -196,11 +161,8 @@ export default function DeliveryActionControls({
                     console.warn('Could not get location for delivery action update');
                 }
 
-                const trimmedNote = note.trim();
-
                 await jobsAPI.updateStatus(delivery.id, nextStatus, {
                     ...locationPayload,
-                    ...(trimmedNote ? { reason: trimmedNote } : {}),
                 });
                 await dispatch(fetchDriverHome());
 
@@ -212,7 +174,6 @@ export default function DeliveryActionControls({
 
             onDeliveryChange?.(nextDelivery);
             onActionSuccess?.({ action, delivery: nextDelivery });
-            setPickupNote('');
             setLastFailedRequest(null);
             didSucceed = true;
         } catch (error) {
@@ -224,13 +185,9 @@ export default function DeliveryActionControls({
             setActionError(message);
             setLastFailedRequest({
                 action,
-                note,
             });
         } finally {
             setLoadingAction(null);
-            if (didSucceed) {
-                setPendingConfirmation(null);
-            }
         }
     };
 
@@ -239,22 +196,13 @@ export default function DeliveryActionControls({
             return;
         }
 
-        if (CRITICAL_ACTION_DETAILS[action]) {
-            setActionError(null);
-            setPendingConfirmation(action);
-            return;
-        }
-
+        setActionError(null);
         void runAction(action);
     };
 
     if (!availableActions.length) {
         return null;
     }
-
-    const confirmation = pendingConfirmation
-        ? CRITICAL_ACTION_DETAILS[pendingConfirmation]
-        : null;
 
     return (
         <>
@@ -267,12 +215,7 @@ export default function DeliveryActionControls({
                             <Button
                                 title={`Retry ${getActionTitle(lastFailedRequest.action)}`}
                                 variant="outline"
-                                onPress={() =>
-                                    void runAction(
-                                        lastFailedRequest.action,
-                                        lastFailedRequest.note
-                                    )
-                                }
+                                onPress={() => void runAction(lastFailedRequest.action)}
                                 loading={loadingAction === lastFailedRequest.action}
                             />
                         ) : null}
@@ -291,68 +234,6 @@ export default function DeliveryActionControls({
                     />
                 ))}
             </View>
-
-            <Modal
-                transparent
-                visible={pendingConfirmation !== null}
-                animationType="fade"
-                onRequestClose={() => setPendingConfirmation(null)}
-            >
-                <View style={styles.modalOverlay}>
-                    <SurfaceCard style={styles.modalCard}>
-                        <Text style={styles.modalTitle}>
-                            {confirmation?.title ?? 'Confirm Action'}
-                        </Text>
-                        <Text style={styles.modalMessage}>
-                            {confirmation?.message ?? 'Do you want to continue?'}
-                        </Text>
-
-                        {confirmation?.noteLabel ? (
-                            <Input
-                                label={confirmation.noteLabel}
-                                placeholder={confirmation.notePlaceholder}
-                                value={pickupNote}
-                                onChangeText={setPickupNote}
-                                multiline
-                                numberOfLines={3}
-                            />
-                        ) : null}
-
-                        <View style={styles.modalActions}>
-                            <Button
-                                title="Cancel"
-                                variant="outline"
-                                onPress={() => {
-                                    setPendingConfirmation(null);
-                                    setActionError(null);
-                                }}
-                                disabled={loadingAction !== null}
-                                style={styles.modalButton}
-                            />
-                            <Button
-                                title={confirmation?.confirmLabel ?? 'Continue'}
-                                variant={
-                                    pendingConfirmation ===
-                                    DeliveryWorkflowAction.COMPLETE_DELIVERY
-                                        ? 'danger'
-                                        : 'primary'
-                                }
-                                onPress={() =>
-                                    pendingConfirmation
-                                        ? void runAction(pendingConfirmation)
-                                        : undefined
-                                }
-                                loading={
-                                    pendingConfirmation !== null &&
-                                    loadingAction === pendingConfirmation
-                                }
-                                disabled={pendingConfirmation === null}
-                                style={styles.modalButton}
-                            />
-                        </View>
-                    </SurfaceCard>
-                </View>
-            </Modal>
         </>
     );
 }
@@ -379,36 +260,5 @@ const styles = StyleSheet.create({
         ...typography.bodySmall,
         color: colors.textSecondary,
         marginBottom: spacing.md,
-    },
-    modalOverlay: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: spacing.lg,
-        backgroundColor: colors.overlay,
-    },
-    modalCard: {
-        width: '100%',
-        maxWidth: 420,
-        borderRadius: radii.lg,
-        padding: spacing.lg,
-    },
-    modalTitle: {
-        ...typography.h3,
-        marginBottom: spacing.sm,
-        textAlign: 'center',
-    },
-    modalMessage: {
-        ...typography.body,
-        color: colors.textSecondary,
-        textAlign: 'center',
-        marginBottom: spacing.lg,
-    },
-    modalActions: {
-        flexDirection: 'row',
-        gap: spacing.sm,
-    },
-    modalButton: {
-        flex: 1,
     },
 });

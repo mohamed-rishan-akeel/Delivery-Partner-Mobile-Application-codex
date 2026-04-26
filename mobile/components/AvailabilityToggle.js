@@ -77,36 +77,52 @@ export default function AvailabilityToggle() {
         dispatch(toggleAvailability({ newStatus, previousStatus: status }));
     };
 
+    const orderAvailabilityMessage = isSyncing
+        ? 'Updating availability. New orders can only be received when this switch is active.'
+        : isOnline
+            ? 'Active. You can receive new orders while this switch is on.'
+            : 'Inactive. Turn this switch on to start receiving new orders.';
+
     return (
         <View style={styles.wrapper}>
-            <View style={styles.labelRow}>
-                <View style={[styles.dot, isOnline ? styles.dotOnline : styles.dotOffline]} />
-                <Text style={[styles.label, isOnline ? styles.labelOnline : styles.labelOffline]}>
-                    {isSyncing ? 'Updating' : isOnline ? 'Online' : 'Offline'}
-                </Text>
+            <View style={styles.topRow}>
+                <View style={styles.labelRow}>
+                    <View style={[styles.dot, isOnline ? styles.dotOnline : styles.dotOffline]} />
+                    <Text style={[styles.label, isOnline ? styles.labelOnline : styles.labelOffline]}>
+                        {isSyncing ? 'Updating' : isOnline ? 'Online' : 'Offline'}
+                    </Text>
+                </View>
+
+                <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={handleToggle}
+                    disabled={isSyncing}
+                    style={styles.touchTarget}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: isOnline, busy: isSyncing }}
+                    accessibilityLabel={`Driver status: ${status}. Orders can only be received when this switch is active. Tap to go ${isOnline ? 'offline' : 'online'}.`}
+                    accessibilityHint="Switch on to receive new orders. Switch off to stop receiving them."
+                >
+                    <Animated.View style={[styles.track, { backgroundColor: interpolatedTrack }]}>
+                        <Animated.View style={[styles.thumb, { left: thumbLeft }]}>
+                            {isSyncing ? <ActivityIndicator size="small" color={colors.primary} /> : null}
+                        </Animated.View>
+                    </Animated.View>
+                </TouchableOpacity>
             </View>
 
-            <TouchableOpacity
-                activeOpacity={0.85}
-                onPress={handleToggle}
-                disabled={isSyncing}
-                style={styles.touchTarget}
-                accessibilityRole="switch"
-                accessibilityState={{ checked: isOnline, busy: isSyncing }}
-                accessibilityLabel={`Driver status: ${status}. Tap to go ${isOnline ? 'offline' : 'online'}.`}
-            >
-                <Animated.View style={[styles.track, { backgroundColor: interpolatedTrack }]}>
-                    <Animated.View style={[styles.thumb, { left: thumbLeft }]}>
-                        {isSyncing ? <ActivityIndicator size="small" color={colors.primary} /> : null}
-                    </Animated.View>
-                </Animated.View>
-            </TouchableOpacity>
+            <Text style={styles.helperText}>{orderAvailabilityMessage}</Text>
         </View>
     );
 }
 
 const styles = StyleSheet.create({
     wrapper: {
+        alignItems: 'flex-end',
+        gap: spacing.xs,
+        maxWidth: 220,
+    },
+    topRow: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: spacing.sm,
@@ -132,10 +148,10 @@ const styles = StyleSheet.create({
         fontWeight: '700',
     },
     labelOnline: {
-        color: colors.surface,
+        color: colors.text,
     },
     labelOffline: {
-        color: 'rgba(255,255,255,0.76)',
+        color: colors.textSecondary,
     },
     touchTarget: {
         padding: 2,
@@ -154,5 +170,12 @@ const styles = StyleSheet.create({
         backgroundColor: colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    helperText: {
+        ...typography.caption,
+        maxWidth: 220,
+        color: colors.textSecondary,
+        textAlign: 'right',
+        lineHeight: 18,
     },
 });

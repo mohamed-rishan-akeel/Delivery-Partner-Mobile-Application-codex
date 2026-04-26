@@ -17,6 +17,7 @@ import AssignedDeliveriesScreen from './screens/AssignedDeliveriesScreen';
 import ProofOfDeliveryScreen from './screens/ProofOfDeliveryScreen';
 import JobHistoryScreen from './screens/JobHistoryScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import RealtimeDispatchLayer from './components/RealtimeDispatchLayer';
 
 import { getAccessToken } from './services/storage';
 import { requestLocationPermission } from './services/location';
@@ -185,6 +186,7 @@ function AppContent() {
                     />
                 </Stack.Navigator>
             </NavigationContainer>
+            <RealtimeDispatchLayer isAuthenticated={isAuthenticated} />
         </>
     );
 }

@@ -9,12 +9,16 @@ import {
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import SignatureCanvas from 'react-native-signature-canvas';
+import { useDispatch } from 'react-redux';
 import { Button, Input, SurfaceCard, SectionHeader, StatusBadge } from '../components/Common';
 import { jobsAPI } from '../services/api';
 import { getCurrentLocation } from '../services/location';
+import { fetchAssignedDeliveries } from '../store/slices/assignedDeliveriesSlice';
+import { fetchDriverHome } from '../store/slices/homeSlice';
 import { colors, spacing, typography } from '../styles/theme';
 
 export default function ProofOfDeliveryScreen({ route, navigation }) {
+    const dispatch = useDispatch();
     const { jobId } = route.params;
     const [photoUri, setPhotoUri] = useState(null);
     const [signature, setSignature] = useState(null);
@@ -65,9 +69,27 @@ export default function ProofOfDeliveryScreen({ route, navigation }) {
             };
 
             await jobsAPI.submitProof(jobId, proofData);
+            await Promise.all([
+                dispatch(fetchDriverHome()),
+                dispatch(fetchAssignedDeliveries()),
+            ]);
 
-            Alert.alert('Success', 'Delivery completed!', [
-                { text: 'OK', onPress: () => navigation.navigate('Home') },
+            Alert.alert('Success', 'Delivery completed and archived.', [
+                {
+                    text: 'OK',
+                    onPress: () =>
+                        navigation.reset({
+                            index: 0,
+                            routes: [
+                                {
+                                    name: 'MainTabs',
+                                    params: {
+                                        screen: 'Home',
+                                    },
+                                },
+                            ],
+                        }),
+                },
             ]);
         } catch (error) {
             Alert.alert('Error', 'Failed to submit proof of delivery');
@@ -98,7 +120,7 @@ export default function ProofOfDeliveryScreen({ route, navigation }) {
             <SectionHeader
                 eyebrow="Closeout"
                 title="Proof of Delivery"
-                subtitle="Capture final evidence before marking the route complete."
+                subtitle="Archive the final handoff so the order can move from active delivery to history."
                 right={<StatusBadge label={`Job #${jobId}`} tone="info" />}
             />
 

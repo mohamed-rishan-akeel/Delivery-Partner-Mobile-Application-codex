@@ -104,7 +104,7 @@ export default function ActiveDeliveryScreen({ route: navigationRoute, navigatio
     const [driverLocation, setDriverLocation] = useState(null);
     const [routeError, setRouteError] = useState(null);
     const [isResolvingRoute, setIsResolvingRoute] = useState(true);
-    const { isTracking, isPaused, trackingError, stopTracking } =
+    const { isTracking, isPaused, trackingError } =
         useLiveLocationTracking({
             jobId: job?.id,
             status: job?.status,
@@ -423,9 +423,8 @@ export default function ActiveDeliveryScreen({ route: navigationRoute, navigatio
                 <DeliveryActionControls
                     delivery={job}
                     onDeliveryChange={setJob}
-                    onActionSuccess={({ delivery: nextDelivery }) => {
-                        if (nextDelivery.status === 'delivered') {
-                            void stopTracking();
+                    onActionSuccess={({ action, delivery: nextDelivery }) => {
+                        if (action === 'complete_delivery') {
                             navigation.navigate('ProofOfDelivery', {
                                 jobId: nextDelivery.id,
                             });

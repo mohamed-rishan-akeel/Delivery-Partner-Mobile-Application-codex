@@ -92,7 +92,7 @@ export const DELIVERY_ACTION_LABELS: Readonly<
     [DeliveryWorkflowAction.ARRIVE_PICKUP]: 'Arrived at Pickup',
     [DeliveryWorkflowAction.PICK_UP]: 'Confirm Pickup',
     [DeliveryWorkflowAction.START_TRANSIT]: 'Start Transit',
-    [DeliveryWorkflowAction.COMPLETE_DELIVERY]: 'Mark Delivered',
+    [DeliveryWorkflowAction.COMPLETE_DELIVERY]: 'Complete Delivery',
     [DeliveryWorkflowAction.CANCEL]: 'Cancel Delivery',
 };
 

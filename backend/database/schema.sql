@@ -3,6 +3,7 @@
 -- Drop tables if they exist (for clean setup)
 DROP TABLE IF EXISTS proof_of_delivery CASCADE;
 DROP TABLE IF EXISTS job_tracking CASCADE;
+DROP TABLE IF EXISTS delivery_request_offers CASCADE;
 DROP TABLE IF EXISTS delivery_jobs CASCADE;
 DROP TABLE IF EXISTS refresh_tokens CASCADE;
 DROP TABLE IF EXISTS delivery_partners CASCADE;
@@ -129,6 +130,21 @@ CREATE TABLE proof_of_delivery (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Realtime Dispatch Offers Table
+CREATE TABLE delivery_request_offers (
+    id SERIAL PRIMARY KEY,
+    job_id INTEGER NOT NULL REFERENCES delivery_jobs(id) ON DELETE CASCADE,
+    partner_id INTEGER NOT NULL REFERENCES delivery_partners(id) ON DELETE CASCADE,
+    offer_status VARCHAR(20) NOT NULL CHECK (
+        offer_status IN ('pending', 'accepted', 'declined', 'expired', 'cancelled')
+    ),
+    distance_to_pickup_km DECIMAL(8, 3),
+    offered_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    expires_at TIMESTAMP NOT NULL,
+    responded_at TIMESTAMP,
+    response_reason TEXT
+);
+
 -- Indexes for Performance
 CREATE INDEX idx_partners_email ON delivery_partners(email);
 CREATE INDEX idx_partners_status ON delivery_partners(status);
@@ -139,6 +155,15 @@ CREATE INDEX idx_tracking_job ON job_tracking(job_id);
 CREATE INDEX idx_tracking_recorded_at ON job_tracking(recorded_at);
 CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
 CREATE INDEX idx_refresh_tokens_partner ON refresh_tokens(partner_id);
+CREATE INDEX idx_dispatch_offers_job_id ON delivery_request_offers(job_id);
+CREATE INDEX idx_dispatch_offers_partner_id ON delivery_request_offers(partner_id);
+CREATE INDEX idx_dispatch_offers_status ON delivery_request_offers(offer_status, expires_at);
+CREATE UNIQUE INDEX idx_dispatch_single_pending_job
+    ON delivery_request_offers(job_id)
+    WHERE offer_status = 'pending';
+CREATE UNIQUE INDEX idx_dispatch_single_pending_partner
+    ON delivery_request_offers(partner_id)
+    WHERE offer_status = 'pending';
 
 -- Function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_updated_at_column()

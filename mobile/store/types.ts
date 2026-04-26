@@ -23,6 +23,13 @@ export type RootState = {
         isRefreshing: boolean;
         error: string | null;
     };
+    incomingRequest: {
+        currentRequest: unknown;
+        connectionStatus: 'disconnected' | 'connecting' | 'connected';
+        isActing: boolean;
+        error: string | null;
+        lastEventAt: number | null;
+    };
 };
 
 export type AppDispatch = ThunkDispatch<RootState, unknown, UnknownAction>;

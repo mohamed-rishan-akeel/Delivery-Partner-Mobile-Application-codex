@@ -2,6 +2,10 @@ const express = require('express');
 const { body, validationResult } = require('express-validator');
 const { query } = require('../config/database');
 const { authenticateToken } = require('../middleware/auth');
+const {
+    cancelPendingOffersForPartner,
+    dispatchAvailableJobs,
+} = require('../services/realtimeDispatch');
 
 const router = express.Router();
 
@@ -244,6 +248,12 @@ router.put(
                 [status, req.user.id]
             );
 
+            if (status === 'offline') {
+                await cancelPendingOffersForPartner(req.user.id, 'partner_went_offline');
+            } else {
+                await dispatchAvailableJobs();
+            }
+
             res.json({
                 success: true,
                 message: 'Status updated successfully',
@@ -282,6 +292,8 @@ router.put(
                 'UPDATE delivery_partners SET current_latitude = $1, current_longitude = $2 WHERE id = $3',
                 [latitude, longitude, req.user.id]
             );
+
+            await dispatchAvailableJobs();
 
             res.json({
                 success: true,

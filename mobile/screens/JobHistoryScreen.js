@@ -5,21 +5,30 @@ import {
     FlatList,
     StyleSheet,
     RefreshControl,
+    Image,
 } from 'react-native';
+import { useIsFocused } from '@react-navigation/native';
 import { jobsAPI } from '../services/api';
 import { SurfaceCard, StatusBadge, SectionHeader, EmptyState } from '../components/Common';
 import { colors, spacing, typography } from '../styles/theme';
 
 const toneForStatus = (status) => (status === 'delivered' ? 'success' : 'warning');
+const formatHistoryStatus = (status) =>
+    status === 'delivered'
+        ? 'COMPLETED'
+        : status.replace(/_/g, ' ').toUpperCase();
 
 export default function JobHistoryScreen() {
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const isFocused = useIsFocused();
 
     useEffect(() => {
-        loadHistory();
-    }, []);
+        if (isFocused) {
+            loadHistory();
+        }
+    }, [isFocused]);
 
     const loadHistory = async () => {
         try {
@@ -33,34 +42,75 @@ export default function JobHistoryScreen() {
         }
     };
 
-    const renderJob = ({ item }) => (
-        <SurfaceCard style={styles.jobCard}>
-            <View style={styles.jobHeader}>
-                <View style={styles.headerCopy}>
-                    <Text style={styles.orderNumber}>{item.order_number}</Text>
-                    <Text style={styles.date}>
-                        {new Date(item.delivered_at || item.assigned_at).toLocaleDateString()}
+    const renderJob = ({ item }) => {
+        const deliveredAt = item.delivered_at || item.proof_submitted_at || item.assigned_at;
+        const hasProofArchive = Boolean(item.photo_url || item.signature_data);
+
+        return (
+            <SurfaceCard style={styles.jobCard}>
+                <View style={styles.jobHeader}>
+                    <View style={styles.headerCopy}>
+                        <Text style={styles.orderNumber}>{item.order_number}</Text>
+                        <Text style={styles.date}>
+                            {deliveredAt
+                                ? new Date(deliveredAt).toLocaleString()
+                                : 'Completion time unavailable'}
+                        </Text>
+                    </View>
+                    <StatusBadge
+                        label={formatHistoryStatus(item.status)}
+                        tone={toneForStatus(item.status)}
+                    />
+                </View>
+
+                <Text style={styles.addressLabel}>Pickup</Text>
+                <Text style={styles.address}>{item.pickup_address}</Text>
+                <Text style={[styles.addressLabel, styles.addressGap]}>Dropoff</Text>
+                <Text style={styles.address}>{item.dropoff_address}</Text>
+
+                <View style={styles.archiveBlock}>
+                    <Text style={styles.archiveTitle}>Completion Archive</Text>
+                    <Text style={styles.archiveMeta}>
+                        Delivered: {deliveredAt ? new Date(deliveredAt).toLocaleString() : 'Unavailable'}
+                    </Text>
+                    <Text style={styles.archiveMeta}>
+                        Proof: {hasProofArchive ? 'Archived' : 'Not available'}
+                    </Text>
+                    {item.recipient_name ? (
+                        <Text style={styles.archiveMeta}>Recipient: {item.recipient_name}</Text>
+                    ) : null}
+                    {item.notes ? (
+                        <Text style={styles.archiveNotes}>{item.notes}</Text>
+                    ) : null}
+
+                    {hasProofArchive ? (
+                        <View style={styles.proofPreviewRow}>
+                            {item.photo_url ? (
+                                <Image
+                                    source={{ uri: item.photo_url }}
+                                    style={styles.photoPreview}
+                                />
+                            ) : null}
+                            {item.signature_data ? (
+                                <Image
+                                    source={{ uri: item.signature_data }}
+                                    style={styles.signaturePreview}
+                                    resizeMode="contain"
+                                />
+                            ) : null}
+                        </View>
+                    ) : null}
+                </View>
+
+                <View style={styles.footer}>
+                    <Text style={styles.payment}>${Number(item.payment_amount || 0).toFixed(2)}</Text>
+                    <Text style={styles.distance}>
+                        {item.distance_km ? `${Number(item.distance_km).toFixed(1)} km` : 'Completed'}
                     </Text>
                 </View>
-                <StatusBadge
-                    label={item.status.replace(/_/g, ' ').toUpperCase()}
-                    tone={toneForStatus(item.status)}
-                />
-            </View>
-
-            <Text style={styles.addressLabel}>Pickup</Text>
-            <Text style={styles.address}>{item.pickup_address}</Text>
-            <Text style={[styles.addressLabel, styles.addressGap]}>Dropoff</Text>
-            <Text style={styles.address}>{item.dropoff_address}</Text>
-
-            <View style={styles.footer}>
-                <Text style={styles.payment}>${item.payment_amount.toFixed(2)}</Text>
-                <Text style={styles.distance}>
-                    {item.distance_km ? `${item.distance_km.toFixed(1)} km` : 'Completed'}
-                </Text>
-            </View>
-        </SurfaceCard>
-    );
+            </SurfaceCard>
+        );
+    };
 
     return (
         <View style={styles.container}>
@@ -140,6 +190,47 @@ const styles = StyleSheet.create({
     },
     address: {
         ...typography.body,
+    },
+    archiveBlock: {
+        marginTop: spacing.md,
+        paddingTop: spacing.md,
+        borderTopWidth: 1,
+        borderTopColor: colors.border,
+    },
+    archiveTitle: {
+        ...typography.caption,
+        color: colors.textSecondary,
+        fontWeight: '700',
+        marginBottom: spacing.xs,
+    },
+    archiveMeta: {
+        ...typography.bodySmall,
+        color: colors.textSecondary,
+        marginBottom: spacing.xs,
+    },
+    archiveNotes: {
+        ...typography.bodySmall,
+        color: colors.text,
+        marginTop: spacing.xs,
+    },
+    proofPreviewRow: {
+        flexDirection: 'row',
+        gap: spacing.sm,
+        marginTop: spacing.sm,
+    },
+    photoPreview: {
+        flex: 1,
+        height: 96,
+        borderRadius: 14,
+        backgroundColor: colors.surfaceMuted,
+    },
+    signaturePreview: {
+        flex: 1,
+        height: 96,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: colors.border,
+        backgroundColor: colors.surface,
     },
     footer: {
         flexDirection: 'row',
